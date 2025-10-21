@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת ניהול משימות - פרוטק</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --gray: #7f8c8d;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--gray);
+            font-size: 1.1em;
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px 15px 0 0;
+            overflow-x: auto;
+            margin-bottom: 0;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            border-bottom-color: var(--primary);
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .tab:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .tab-content {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 0 0 15px 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: var(--light);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), #27ae60);
+            transition: width 0.3s ease;
+        }
+
+        .task-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+
+        .task-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--primary);
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .task-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .task-card.critical {
+            border-left-color: var(--danger);
+            background: linear-gradient(135deg, #fff 0%, #ffeaea 100%);
+        }
+
+        .task-card.critical::before {
+            content: "⚠️ קריטי";
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: var(--danger);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .task-card.high-priority {
+            border-left-color: var(--danger);
+        }
+
+        .task-card.medium-priority {
+            border-left-color: var(--warning);
+        }
+
+        .task-card.low-priority {
+            border-left-color: var(--success);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .task-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--dark);
+            flex-grow: 1;
+            margin-left: 10px;
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .badge-assignee {
+            background: var(--primary);
+            color: white;
+        }
+
+        .badge-status {
+            background: var(--gray);
+            color: white;
+        }
+
+        .badge-status.in-progress {
+            background: var(--warning);
+        }
+
+        .badge-status.completed {
+            background: var(--success);
+        }
+
+        .task-description {
+            color: var(--gray);
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .checklist {
+            margin: 15px 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+            cursor: pointer;
+        }
+
+        .checklist-item:hover {
+            background: #e9ecef;
+        }
+
+        .checklist-item input {
+            margin-left: 10px;
+        }
+
+        .checklist-item label {
+            flex-grow: 1;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+
+        .checklist-item.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .checklist-notes {
+            font-size: 0.8em;
+            color: var(--gray);
+            margin-top: 5px;
+            padding-right: 20px;
+            font-style: italic;
+        }
+
+        .checklist-details {
+            font-size: 0.8em;
+            color: var(--gray);
+            margin-top: 5px;
+            padding-right: 20px;
+        }
+
+        .file-attachment {
+            display: inline-flex;
+            align-items: center;
+            background: var(--light);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            margin-left: 5px;
+            color: var(--dark);
+        }
+
+        .task-notes {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            color: var(--dark);
+        }
+
+        .deadline-warning {
+            color: var(--danger);
+            font-weight: bold;
+        }
+
+        .deadline-normal {
+            color: var(--success);
+        }
+
+        .deadline-close {
+            color: var(--warning);
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8em;
+        }
+
+        .btn-xs {
+            padding: 3px 6px;
+            font-size: 0.7em;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-large {
+            max-width: 800px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .checklist-edit-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .checklist-edit-item input[type="text"] {
+            flex-grow: 1;
+            margin: 0;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .team-member {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .team-member.active {
+            border-color: var(--success);
+        }
+
+        .timeline-view {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .timeline-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border-right: 4px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .timeline-date {
+            font-weight: bold;
+            color: var(--dark);
+            min-width: 120px;
+        }
+
+        .checklist-history {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .history-item {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-preview {
+            display: inline-flex;
+            align-items: center;
+            background: var(--light);
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin: 5px;
+            text-decoration: none;
+            color: var(--dark);
+        }
+
+        .file-preview:hover {
+            background: var(--primary);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 מערכת ניהול משימות - פרוטק</h1>
+            <p class="subtitle">ניהול ועמידה ביעדים האסטרטגיים של החברה</p>
+        </header>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('dashboard')">📊 לוח בקרה</div>
+            <div class="tab" onclick="switchTab('tasks')">📋 כל המשימות</div>
+            <div class="tab" onclick="switchTab('timeline')">📅 לוח זמנים</div>
+            <div class="tab" onclick="switchTab('team')">👥 ניהול צוות</div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="dashboard">
+                <div class="card">
+                    <h2>📊 סטטוס כללי</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="total-tasks">0</div>
+                            <div>סה"כ משימות</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="completed-tasks">0</div>
+                            <div>הושלמו</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="in-progress-tasks">0</div>
+                            <div>בביצוע</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="pending-tasks">0</div>
+                            <div>ממתינות</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🎯 משימות קריטיות</h2>
+                    <div id="critical-tasks-list">
+                        <!-- Critical tasks will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📈 משימות לפי דדליין</h2>
+                <div id="deadline-tasks-list">
+                    <!-- Deadline tasks will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Tab -->
+        <div id="tasks" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>📋 כל המשימות</h2>
+                <button class="btn btn-primary" onclick="openAddTaskModal()">
+                    <i class="fas fa-plus"></i> משימה חדשה
+                </button>
+            </div>
+            <div class="task-grid" id="tasks-container">
+                <!-- Tasks will be populated here by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Timeline Tab -->
+        <div id="timeline" class="tab-content">
+            <h2>📅 לוח זמנים - משימות פתוחות</h2>
+            <div class="timeline-view" id="timeline-container">
+                <!-- Timeline items will be populated here -->
+            </div>
+        </div>
+
+        <!-- Team Tab -->
+        <div id="team" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>👥 ניהול צוות</h2>
+                <button class="btn btn-primary" onclick="openAddMemberModal()">
+                    <i class="fas fa-plus"></i> הוסף איש צוות
+                </button>
+            </div>
+            <div class="team-grid" id="team-container">
+                <!-- Team members will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="modal">
+        <div class="modal-content">
+            <h2>הוספת משימה חדשה</h2>
+            <form id="taskForm">
+                <div class="form-group">
+                    <label for="taskTitle">כותרת המשימה</label>
+                    <input type="text" id="taskTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">תיאור המשימה</label>
+                    <textarea id="taskDescription" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="taskAssignee">אחראי</label>
+                    <select id="taskAssignee" required>
+                        <option value="">בחר אחראי</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="taskPriority">עדיפות</label>
+                    <select id="taskPriority" required>
+                        <option value="low">נמוכה</option>
+                        <option value="medium">בינונית</option>
+                        <option value="high">גבוהה</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="taskCritical"> 
+                        משימה קריטית ⚠️
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="taskDeadline">תאריך יעד</label>
+                    <input type="date" id="taskDeadline" required>
+                </div>
+                <div class="form-group">
+                    <label>צ'ק-ליסט (רשום פריטים מופרדים בפסיק)</label>
+                    <input type="text" id="taskChecklist" placeholder="פריט 1, פריט 2, פריט 3">
+                </div>
+                <div class="form-group">
+                    <label for="taskNotes">הערות כלליות</label>
+                    <textarea id="taskNotes" placeholder="הערות נוספות על המשימה..."></textarea>
+                </div>
+                <div class="task-actions">
+                    <button type="submit" class="btn btn-success">שמור משימה</button>
+                    <button type="button" class="btn btn-danger" onclick="closeAddTaskModal()">ביטול</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Task Modal -->
+    <div id="editTaskModal" class="modal">
+        <div class="modal-content modal-large">
+            <h2>עריכת משימה</h2>
+            <form id="editTaskForm">
+                <input type="hidden" id="editTaskId">
+                <div class="form-group">
+                    <label for="editTaskTitle">כותרת המשימה</label>
+                    <input type="text" id="editTaskTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="editTaskDescription">תיאור המשימה</label>
+                    <textarea id="editTaskDescription" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editTaskAssignee">אחראי</label>
+                    <select id="editTaskAssignee" required>
+                        <option value="">בחר אחראי</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editTaskPriority">עדיפות</label>
+                    <select id="editTaskPriority" required>
+                        <option value="low">נמוכה</option>
+                        <option value="medium">בינונית</option>
+                        <option value="high">גבוהה</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="editTaskCritical"> 
+                        משימה קריטית ⚠️
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="editTaskDeadline">תאריך יעד</label>
+                    <input type="date" id="editTaskDeadline" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>ניהול צ'ק-ליסט</label>
+                    <div id="checklistEditContainer">
+                        <!-- Checklist items will be populated here -->
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="addChecklistItem()" style="margin-top: 10px;">
+                        <i class="fas fa-plus"></i> הוסף פריט צ'קליסט
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editTaskNotes">הערות כלליות</label>
+                    <textarea id="editTaskNotes" placeholder="הערות נוספות על המשימה..."></textarea>
+                </div>
+                <div class="task-actions">
+                    <button type="submit" class="btn btn-success">עדכן משימה</button>
+                    <button type="button" class="btn btn-danger" onclick="closeEditTaskModal()">ביטול</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Checklist Details Modal -->
+    <div id="checklistDetailsModal" class="modal">
+        <div class="modal-content">
+            <h2>פרטי משימה בצ'קליסט</h2>
+            <div id="checklistDetailsContent">
+                <!-- Checklist details will be populated here -->
+            </div>
+            <div class="task-actions" style="margin-top: 20px;">
+                <button type="button" class="btn btn-primary" onclick="closeChecklistDetailsModal()">סגור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complete Checklist Modal -->
+    <div id="completeChecklistModal" class="modal">
+        <div class="modal-content">
+            <h2>סימון משימה כהושלמה</h2>
+            <form id="completeChecklistForm">
+                <input type="hidden" id="completeTaskId">
+                <input type="hidden" id="completeItemIndex">
+                <div class="form-group">
+                    <label for="completionNotes">פירוט מה בוצע:</label>
+                    <textarea id="completionNotes" required placeholder="פרט מה בדיוק בוצע..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="fileAttachment">צירוף קובץ (אופציונלי):</label>
+                    <input type="file" id="fileAttachment" accept=".doc,.docx,.pdf,.jpg,.jpeg,.png,.xls,.xlsx">
+                </div>
+                <div class="task-actions">
+                    <button type="submit" class="btn btn-success">אשר השלמה</button>
+                    <button type="button" class="btn btn-danger" onclick="closeCompleteChecklistModal()">ביטול</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Team Member Modal -->
+    <div id="addMemberModal" class="modal">
+        <div class="modal-content">
+            <h2>הוספת איש צוות</h2>
+            <form id="memberForm">
+                <div class="form-group">
+                    <label for="memberName">שם איש הצוות</label>
+                    <input type="text" id="memberName" required placeholder="לדוגמה: נתי, ארתור, דין...">
+                </div>
+                <div class="form-group">
+                    <label for="memberRole">תפקיד</label>
+                    <input type="text" id="memberRole" required placeholder="לדוגמה: מנהל שיווק, מתכנת...">
+                </div>
+                <div class="task-actions">
+                    <button type="submit" class="btn btn-success">הוסף לצוות</button>
+                    <button type="button" class="btn btn-danger" onclick="closeAddMemberModal()">ביטול</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Data management with localStorage
+        function saveData() {
+            localStorage.setItem('taskManagementData', JSON.stringify({
+                tasks: tasks,
+                team: team
+            }));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('taskManagementData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                tasks = data.tasks || [];
+                team = data.team || [];
+                
+                // Initialize checklist history for existing tasks
+                tasks.forEach(task => {
+                    task.checklist.forEach(item => {
+                        if (!item.history) item.history = [];
+                        if (!item.attachments) item.attachments = [];
+                    });
+                });
+            }
+        }
+
+        // Sample initial data
+        let tasks = [];
+        let team = [
+            { id: 1, name: "נתי", role: "מנהל פרויקטים", active: true },
+            { id: 2, name: "ארתור", role: "מפתח", active: true },
+            { id: 3, name: "דין", role: "מעצב", active: true }
+        ];
+
+        // Initialize the app
+        function initApp() {
+            loadData();
+            renderTasks();
+            updateStats();
+            renderCriticalTasks();
+            renderDeadlineTasks();
+            renderTimeline();
+            renderTeam();
+            populateAssigneeDropdowns();
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+        }
+
+        // Render all tasks
+        function renderTasks() {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = '';
+
+            tasks.forEach(task => {
+                const taskElement = createTaskElement(task);
+                container.appendChild(taskElement);
+            });
+        }
+
+        // Create task element
+        function createTaskElement(task) {
+            const div = document.createElement('div');
+            const criticalClass = task.critical ? 'critical' : '';
+            
+            div.className = `task-card ${task.priority}-priority ${criticalClass}`;
+            
+            const progressPercent = task.progress;
+            const completedChecklist = task.checklist.filter(item => item.completed).length;
+            const totalChecklist = task.checklist.length;
+            const checklistProgress = totalChecklist > 0 ? Math.round((completedChecklist / totalChecklist) * 100) : 0;
+
+            // Deadline color coding
+            const deadlineClass = getDeadlineClass(task.deadline);
+
+            div.innerHTML = `
+                <div class="task-header">
+                    <div class="task-title">${task.title}</div>
+                    <div class="task-meta">
+                        <span class="badge badge-assignee">${task.assignee}</span>
+                        <span class="badge badge-status ${task.status}">
+                            ${getStatusText(task.status)}
+                        </span>
+                    </div>
+                </div>
+                <div class="task-description">${task.description}</div>
+                
+                ${task.notes ? `<div class="task-notes"><strong>הערות:</strong> ${task.notes}</div>` : ''}
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${progressPercent}%"></div>
+                </div>
+                <div style="text-align: center; margin-bottom: 15px; font-weight: bold;">
+                    ${progressPercent}% הושלם
+                </div>
+
+                <div class="checklist">
+                    <strong>צ'ק-ליסט (${checklistProgress}%):</strong>
+                    ${task.checklist.map((item, index) => `
+                        <div class="checklist-item ${item.completed ? 'completed' : ''}" onclick="openChecklistDetails(${task.id}, ${index})">
+                            <input type="checkbox" ${item.completed ? 'checked' : ''} 
+                                   onchange="event.stopPropagation(); openCompleteChecklistModal(${task.id}, ${index})">
+                            <label>${item.text}</label>
+                            ${item.attachments && item.attachments.length > 0 ? 
+                                `<span class="file-attachment"><i class="fas fa-paperclip"></i> ${item.attachments.length}</span>` : ''}
+                            ${item.completionNotes ? `<div class="checklist-details">${item.completionNotes.substring(0, 50)}...</div>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="${deadlineClass}" style="font-size: 0.9em; margin: 10px 0;">
+                    <i class="far fa-calendar"></i> יעד: ${formatDate(task.deadline)}
+                </div>
+
+                <div class="task-actions">
+                    <button class="btn btn-primary btn-sm" onclick="updateProgress(${task.id}, ${task.progress + 25})">
+                        <i class="fas fa-sync-alt"></i> עדכן התקדמות
+                    </button>
+                    <button class="btn btn-warning btn-sm" onclick="openEditTaskModal(${task.id})">
+                        <i class="fas fa-edit"></i> ערוך
+                    </button>
+                    <button class="btn btn-success btn-sm" onclick="completeTask(${task.id})">
+                        <i class="fas fa-check"></i> הושלם
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">
+                        <i class="fas fa-trash"></i> מחק
+                    </button>
+                </div>
+            `;
+
+            return div;
+        }
+
+        // Update statistics
+        function updateStats() {
+            const totalTasks = tasks.length;
+            const completedTasks = tasks.filter(task => task.status === 'completed').length;
+            const inProgressTasks = tasks.filter(task => task.status === 'in-progress').length;
+            const pendingTasks = tasks.filter(task => task.status === 'pending').length;
+
+            document.getElementById('total-tasks').textContent = totalTasks;
+            document.getElementById('completed-tasks').textContent = completedTasks;
+            document.getElementById('in-progress-tasks').textContent = inProgressTasks;
+            document.getElementById('pending-tasks').textContent = pendingTasks;
+        }
+
+        // Render critical tasks
+        function renderCriticalTasks() {
+            const container = document.getElementById('critical-tasks-list');
+            const criticalTasks = tasks.filter(task => task.critical && task.status !== 'completed');
+            
+            if (criticalTasks.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--gray);">אין משימות קריטיות כרגע</p>';
+                return;
+            }
+            
+            container.innerHTML = criticalTasks.map(task => `
+                <div style="background: #fff5f5; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-right: 3px solid var(--danger);">
+                    <div style="font-weight: bold; color: var(--danger);">⚠️ ${task.title}</div>
+                    <div style="color: var(--gray); font-size: 0.9em;">אחראי: ${task.assignee}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${task.progress}%"></div>
+                    </div>
+                    <div style="text-align: center; font-size: 0.8em;">${task.progress}% הושלם</div>
+                </div>
+            `).join('');
+        }
+
+        // Render deadline tasks
+        function renderDeadlineTasks() {
+            const container = document.getElementById('deadline-tasks-list');
+            const sortedTasks = tasks
+                .filter(task => task.status !== 'completed')
+                .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+                .slice(0, 5);
+            
+            if (sortedTasks.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--gray);">אין משימות עם דדליין קרוב</p>';
+                return;
+            }
+            
+            container.innerHTML = sortedTasks.map(task => {
+                const deadlineClass = getDeadlineClass(task.deadline);
+                return `
+                    <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-right: 3px solid var(--primary);">
+                        <div style="font-weight: bold;">${task.title}</div>
+                        <div style="color: var(--gray); font-size: 0.9em;">אחראי: ${task.assignee}</div>
+                        <div class="${deadlineClass}" style="font-size: 0.9em;">
+                            <i class="far fa-calendar"></i> ${formatDate(task.deadline)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render timeline
+        function renderTimeline() {
+            const container = document.getElementById('timeline-container');
+            const sortedTasks = tasks
+                .filter(task => task.status !== 'completed')
+                .sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+            
+            if (sortedTasks.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--gray);">אין משימות פתוחות</p>';
+                return;
+            }
+            
+            container.innerHTML = sortedTasks.map(task => {
+                const deadlineClass = getDeadlineClass(task.deadline);
+                return `
+                    <div class="timeline-item">
+                        <div>
+                            <div style="font-weight: bold;">${task.title}</div>
+                            <div style="color: var(--gray); font-size: 0.9em;">אחראי: ${task.assignee} | סטטוס: ${getStatusText(task.status)}</div>
+                        </div>
+                        <div class="timeline-date ${deadlineClass}">
+                            ${formatDate(task.deadline)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render team
+        function renderTeam() {
+            const container = document.getElementById('team-container');
+            container.innerHTML = team.map(member => `
+                <div class="team-member ${member.active ? 'active' : ''}">
+                    <div style="font-size: 2em; margin-bottom: 10px;">👤</div>
+                    <div style="font-weight: bold; font-size: 1.2em;">${member.name}</div>
+                    <div style="color: var(--gray); margin: 5px 0;">${member.role}</div>
+                    <div style="font-size: 0.8em; color: ${member.active ? 'var(--success)' : 'var(--danger)'};">
+                        ${member.active ? 'פעיל' : 'לא פעיל'}
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="deleteTeamMember(${member.id})" style="margin-top: 10px;">
+                        <i class="fas fa-trash"></i> הסר
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Helper functions
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': 'ממתין',
+                'in-progress': 'בביצוע',
+                'completed': 'הושלם'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('he-IL');
+        }
+
+        function getDeadlineClass(deadline) {
+            const today = new Date();
+            const taskDate = new Date(deadline);
+            const diffTime = taskDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) return 'deadline-warning'; // Overdue
+            if (diffDays <= 3) return 'deadline-warning'; // Due in 3 days or less
+            if (diffDays <= 7) return 'deadline-close'; // Due in a week
+            return 'deadline-normal'; // More than a week
+        }
+
+        // Populate assignee dropdowns
+        function populateAssigneeDropdowns() {
+            const dropdowns = [
+                document.getElementById('taskAssignee'),
+                document.getElementById('editTaskAssignee')
+            ];
+            
+            dropdowns.forEach(dropdown => {
+                if (dropdown) {
+                    dropdown.innerHTML = '<option value="">בחר אחראי</option>' +
+                        team.filter(member => member.active)
+                            .map(member => `<option value="${member.name}">${member.name} - ${member.role}</option>`)
+                            .join('');
+                }
+            });
+        }
+
+        // Checklist management functions
+        function openChecklistDetails(taskId, itemIndex) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task && task.checklist[itemIndex]) {
+                const item = task.checklist[itemIndex];
+                
+                let attachmentsHtml = '';
+                if (item.attachments && item.attachments.length > 0) {
+                    attachmentsHtml = `
+                        <div class="form-group">
+                            <label>קבצים מצורפים:</label>
+                            ${item.attachments.map((file, idx) => `
+                                <a href="${file.url}" class="file-preview" target="_blank">
+                                    <i class="fas fa-paperclip"></i> ${file.name}
+                                </a>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+                
+                let historyHtml = '';
+                if (item.history && item.history.length > 0) {
+                    historyHtml = `
+                        <div class="checklist-history">
+                            <label>היסטוריה:</label>
+                            ${item.history.map(history => `
+                                <div class="history-item">
+                                    <div><strong>${formatDate(history.date)}:</strong> ${history.action}</div>
+                                    ${history.notes ? `<div>${history.notes}</div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('checklistDetailsContent').innerHTML = `
+                    <div class="form-group">
+                        <label>משימה:</label>
+                        <div style="padding: 10px; background: #f8f9fa; border-radius: 5px;">${item.text}</div>
+                    </div>
+                    <div class="form-group">
+                        <label>סטטוס:</label>
+                        <div style="padding: 10px; background: ${item.completed ? '#d4edda' : '#fff3cd'}; border-radius: 5px;">
+                            ${item.completed ? '✅ הושלמה' : '⏳ בהמתנה'}
+                        </div>
+                    </div>
+                    ${item.completionNotes ? `
+                        <div class="form-group">
+                            <label>פירוט הביצוע:</label>
+                            <div style="padding: 10px; background: #e9ecef; border-radius: 5px;">${item.completionNotes}</div>
+                        </div>
+                    ` : ''}
+                    ${attachmentsHtml}
+                    ${historyHtml}
+                `;
+                
+                document.getElementById('checklistDetailsModal').style.display = 'block';
+            }
+        }
+
+        function closeChecklistDetailsModal() {
+            document.getElementById('checklistDetailsModal').style.display = 'none';
+        }
+
+        function openCompleteChecklistModal(taskId, itemIndex) {
+            document.getElementById('completeTaskId').value = taskId;
+            document.getElementById('completeItemIndex').value = itemIndex;
+            document.getElementById('completionNotes').value = '';
+            document.getElementById('fileAttachment').value = '';
+            document.getElementById('completeChecklistModal').style.display = 'block';
+        }
+
+        function closeCompleteChecklistModal() {
+            document.getElementById('completeChecklistModal').style.display = 'none';
+        }
+
+        function addChecklistItem() {
+            const container = document.getElementById('checklistEditContainer');
+            const newItem = document.createElement('div');
+            newItem.className = 'checklist-edit-item';
+            newItem.innerHTML = `
+                <input type="text" placeholder="פריט צ'קליסט חדש" value="">
+                <button type="button" class="btn btn-danger btn-xs" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            container.appendChild(newItem);
+        }
+
+        function renderChecklistEdit(task) {
+            const container = document.getElementById('checklistEditContainer');
+            container.innerHTML = '';
+            
+            task.checklist.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'checklist-edit-item';
+                itemDiv.innerHTML = `
+                    <input type="text" value="${item.text}" onchange="updateChecklistItemText(${task.id}, ${index}, this.value)">
+                    <button type="button" class="btn btn-danger btn-xs" onclick="removeChecklistItem(${task.id}, ${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        function updateChecklistItemText(taskId, itemIndex, newText) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.checklist[itemIndex].text = newText;
+                saveData();
+            }
+        }
+
+        function removeChecklistItem(taskId, itemIndex) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.checklist.splice(itemIndex, 1);
+                saveData();
+                renderChecklistEdit(task);
+            }
+        }
+
+        // Task management functions
+        function toggleChecklistItem(taskId, itemIndex) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.checklist[itemIndex].completed = !task.checklist[itemIndex].completed;
+                
+                const completed = task.checklist.filter(item => item.completed).length;
+                const total = task.checklist.length;
+                task.progress = Math.round((completed / total) * 100);
+                
+                if (task.progress === 100) {
+                    task.status = 'completed';
+                } else if (task.progress > 0) {
+                    task.status = 'in-progress';
+                }
+                
+                saveData();
+                initApp();
+            }
+        }
+
+        function updateProgress(taskId, newProgress) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.progress = Math.min(100, Math.max(0, newProgress));
+                
+                if (task.progress === 100) {
+                    task.status = 'completed';
+                } else if (task.progress > 0) {
+                    task.status = 'in-progress';
+                } else {
+                    task.status = 'pending';
+                }
+                
+                saveData();
+                initApp();
+            }
+        }
+
+        function completeTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.progress = 100;
+                task.status = 'completed';
+                task.checklist.forEach(item => {
+                    item.completed = true;
+                    if (!item.completionNotes) {
+                        item.completionNotes = "הושלם אוטומטית";
+                    }
+                });
+                saveData();
+                initApp();
+            }
+        }
+
+        function deleteTask(taskId) {
+            if (confirm('האם אתה בטוח שברצונך למחוק את המשימה?')) {
+                tasks = tasks.filter(t => t.id !== taskId);
+                saveData();
+                initApp();
+            }
+        }
+
+        // Team management functions
+        function deleteTeamMember(memberId) {
+            if (confirm('האם אתה בטוח שברצונך להסיר את איש הצוות?')) {
+                team = team.filter(m => m.id !== memberId);
+                saveData();
+                initApp();
+            }
+        }
+
+        // Modal functions
+        function openAddTaskModal() {
+            document.getElementById('addTaskModal').style.display = 'block';
+        }
+
+        function closeAddTaskModal() {
+            document.getElementById('addTaskModal').style.display = 'none';
+            document.getElementById('taskForm').reset();
+        }
+
+        function openEditTaskModal(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                document.getElementById('editTaskId').value = task.id;
+                document.getElementById('editTaskTitle').value = task.title;
+                document.getElementById('editTaskDescription').value = task.description;
+                document.getElementById('editTaskAssignee').value = task.assignee;
+                document.getElementById('editTaskPriority').value = task.priority;
+                document.getElementById('editTaskCritical').checked = task.critical;
+                document.getElementById('editTaskDeadline').value = task.deadline;
+                document.getElementById('editTaskNotes').value = task.notes || '';
+                
+                renderChecklistEdit(task);
+                document.getElementById('editTaskModal').style.display = 'block';
+            }
+        }
+
+        function closeEditTaskModal() {
+            document.getElementById('editTaskModal').style.display = 'none';
+        }
+
+        function openAddMemberModal() {
+            document.getElementById('addMemberModal').style.display = 'block';
+        }
+
+        function closeAddMemberModal() {
+            document.getElementById('addMemberModal').style.display = 'none';
+            document.getElementById('memberForm').reset();
+        }
+
+        // Handle new task form submission
+        document.getElementById('taskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newTask = {
+                id: Date.now(), // Simple ID generation
+                title: document.getElementById('taskTitle').value,
+                description: document.getElementById('taskDescription').value,
+                assignee: document.getElementById('taskAssignee').value,
+                priority: document.getElementById('taskPriority').value,
+                critical: document.getElementById('taskCritical').checked,
+                status: 'pending',
+                progress: 0,
+                deadline: document.getElementById('taskDeadline').value,
+                notes: document.getElementById('taskNotes').value,
+                checklist: document.getElementById('taskChecklist').value
+                    .split(',')
+                    .map(item => item.trim())
+                    .filter(item => item)
+                    .map(item => ({ 
+                        text: item, 
+                        completed: false, 
+                        completionNotes: '',
+                        attachments: [],
+                        history: []
+                    }))
+            };
+
+            tasks.push(newTask);
+            saveData();
+            initApp();
+            closeAddTaskModal();
+        });
+
+        // Handle edit task form submission
+        document.getElementById('editTaskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const taskId = parseInt(document.getElementById('editTaskId').value);
+            const task = tasks.find(t => t.id === taskId);
+            
+            if (task) {
+                task.title = document.getElementById('editTaskTitle').value;
+                task.description = document.getElementById('editTaskDescription').value;
+                task.assignee = document.getElementById('editTaskAssignee').value;
+                task.priority = document.getElementById('editTaskPriority').value;
+                task.critical = document.getElementById('editTaskCritical').checked;
+                task.deadline = document.getElementById('editTaskDeadline').value;
+                task.notes = document.getElementById('editTaskNotes').value;
+                
+                saveData();
+                initApp();
+                closeEditTaskModal();
+            }
+        });
+
+        // Handle checklist completion form
+        document.getElementById('completeChecklistForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const taskId = parseInt(document.getElementById('completeTaskId').value);
+            const itemIndex = parseInt(document.getElementById('completeItemIndex').value);
+            const completionNotes = document.getElementById('completionNotes').value;
+            const fileInput = document.getElementById('fileAttachment');
+            
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                const item = task.checklist[itemIndex];
+                item.completed = true;
+                item.completionNotes = completionNotes;
+                
+                // Add to history
+                if (!item.history) item.history = [];
+                item.history.push({
+                    date: new Date().toISOString(),
+                    action: 'הושלם',
+                    notes: completionNotes
+                });
+                
+                // Handle file attachment
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    if (!item.attachments) item.attachments = [];
+                    item.attachments.push({
+                        name: file.name,
+                        type: file.type,
+                        url: URL.createObjectURL(file) // In real app, upload to server
+                    });
+                }
+                
+                // Update task progress
+                const completed = task.checklist.filter(item => item.completed).length;
+                const total = task.checklist.length;
+                task.progress = Math.round((completed / total) * 100);
+                
+                if (task.progress === 100) {
+                    task.status = 'completed';
+                } else if (task.progress > 0) {
+                    task.status = 'in-progress';
+                }
+                
+                saveData();
+                initApp();
+                closeCompleteChecklistModal();
+            }
+        });
+
+        // Handle new member form submission
+        document.getElementById('memberForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newMember = {
+                id: Date.now(),
+                name: document.getElementById('memberName').value,
+                role: document.getElementById('memberRole').value,
+                active: true
+            };
+
+            team.push(newMember);
+            saveData();
+            initApp();
+            closeAddMemberModal();
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modals = ['addTaskModal', 'editTaskModal', 'addMemberModal', 'checklistDetailsModal', 'completeChecklistModal'];
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (event.target === modal) {
+                    if (modalId === 'addTaskModal') closeAddTaskModal();
+                    if (modalId === 'editTaskModal') closeEditTaskModal();
+                    if (modalId === 'addMemberModal') closeAddMemberModal();
+                    if (modalId === 'checklistDetailsModal') closeChecklistDetailsModal();
+                    if (modalId === 'completeChecklistModal') closeCompleteChecklistModal();
+                }
+            });
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
